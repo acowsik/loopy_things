@@ -1,19 +1,39 @@
-from mcmc.mcmc import Ising
+from mcmc.mcmc import Ising, Stack
 import numpy as np
 import tqdm
 import matplotlib.pyplot as plt
 
-temperature = 2
+s = Stack(20)
+s.push(1)
+s.push(4)
+s.push(100)
 
-spins = Ising(10, 10, temperature)
+print(s.pop())
+print(s.pop())
+print(s.pop())
 
-Ms = []
+temperatures = np.linspace(2.2, 2.3, 10)
+magnetizations = []
+mag_squareds = []
+for temperature in temperatures:
+    spins = Ising(10, 10, temperature)
+    for _ in range(20):
+        spins.wolff_sweep_total()
 
-for _ in tqdm.tqdm(range(1024)):
-    Ms.append(spins.magnetization() / spins.N)
-    spins.sweep()
+    Ms = []
 
-plt.plot(Ms)
+    for i in tqdm.tqdm(range(1024)):
+        if i % 32 == 0:
+            Ms.append(spins.magnetization() / spins.N)
+        spins.wolff_sweep_total()
+    
+    magnetizations.append(np.mean(Ms))
+    mag_squareds.append(np.std(Ms))
+
 plt.figure()
-plt.plot(np.correlate(Ms, Ms, mode='same'))
+plt.plot(temperatures, magnetizations)
+plt.ylabel("M")
+plt.figure()
+plt.plot(temperatures, mag_squareds)
+plt.ylabel("$M^2$")
 plt.show()
